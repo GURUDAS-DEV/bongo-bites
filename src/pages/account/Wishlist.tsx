@@ -12,6 +12,8 @@ export default function Wishlist() {
   const removeFromWishlist = useRemoveFromWishlist();
   const { addToCart } = useCart();
 
+  console.log("wiiii ", wishlistItems)
+
   if (!isAuthenticated) {
     return (
       <Layout>

@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { Link, useLocation, Outlet } from 'react-router-dom';
-import { useAdminAuth } from '@/contexts/AdminAuthContext';
-import { AdminPasscodeGate } from './AdminPasscodeGate';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { Link, useLocation, Outlet } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { AdminPasscodeGate } from "./AdminPasscodeGate";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Package,
@@ -11,21 +11,24 @@ import {
   Menu,
   X,
   ChevronLeft,
-} from 'lucide-react';
+} from "lucide-react";
 
 const navItems = [
-  { title: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { title: 'Products', href: '/admin/products', icon: Package },
+  { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { title: "Products", href: "/admin/products", icon: Package },
 ];
 
 export function AdminLayout() {
-  const { logout } = useAdminAuth();
+  const { logout } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const isActive = (href: string) => {
-    if (href === '/admin') {
-      return location.pathname === '/admin' || location.pathname === '/admin/dashboard';
+    if (href === "/admin") {
+      return (
+        location.pathname === "/admin" ||
+        location.pathname === "/admin/dashboard"
+      );
     }
     return location.pathname.startsWith(href);
   };
@@ -36,8 +39,8 @@ export function AdminLayout() {
         {/* Sidebar */}
         <aside
           className={cn(
-            'fixed inset-y-0 left-0 z-50 flex flex-col bg-background border-r transition-all duration-300',
-            sidebarOpen ? 'w-64' : 'w-16'
+            "fixed inset-y-0 left-0 z-50 flex flex-col bg-background border-r transition-all duration-300",
+            sidebarOpen ? "w-64" : "w-16",
           )}
         >
           {/* Header */}
@@ -51,9 +54,13 @@ export function AdminLayout() {
               variant="ghost"
               size="icon"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className={cn(!sidebarOpen && 'mx-auto')}
+              className={cn(!sidebarOpen && "mx-auto")}
             >
-              {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              {sidebarOpen ? (
+                <ChevronLeft className="h-4 w-4" />
+              ) : (
+                <Menu className="h-4 w-4" />
+              )}
             </Button>
           </div>
 
@@ -64,10 +71,10 @@ export function AdminLayout() {
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
+                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
                   isActive(item.href)
-                    ? 'bg-primary text-primary-foreground'
-                    : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted text-muted-foreground hover:text-foreground",
                 )}
               >
                 <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -81,8 +88,8 @@ export function AdminLayout() {
             <Button
               variant="ghost"
               className={cn(
-                'w-full justify-start gap-3 text-muted-foreground hover:text-foreground',
-                !sidebarOpen && 'justify-center px-0'
+                "w-full justify-start gap-3 text-muted-foreground hover:text-foreground",
+                !sidebarOpen && "justify-center px-0",
               )}
               onClick={logout}
             >
@@ -95,8 +102,8 @@ export function AdminLayout() {
         {/* Main content */}
         <main
           className={cn(
-            'flex-1 transition-all duration-300',
-            sidebarOpen ? 'ml-64' : 'ml-16'
+            "flex-1 transition-all duration-300",
+            sidebarOpen ? "ml-64" : "ml-16",
           )}
         >
           <div className="p-6">

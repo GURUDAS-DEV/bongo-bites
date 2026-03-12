@@ -3,13 +3,13 @@ import type { WishlistItem, WishlistStats } from '@/types';
 
 export const wishlistService = {
   getAll: () =>
-    apiClient.get<WishlistItem[]>('/api/wishlist'),
+    apiClient.get<WishlistItem[]>('/store/wishlist'),
 
   add: (productId: string) =>
-    apiClient.post<WishlistItem>('/api/wishlist/add', { product_id: productId }),
+    apiClient.post<WishlistItem>('/store/wishlist', { product_id: productId }),
 
   remove: (productId: string) =>
-    apiClient.delete<void>(`/api/wishlist/remove`),
+    apiClient.delete<void>(`/store/wishlist/${productId}`),
 
   // Admin
   getStats: () =>

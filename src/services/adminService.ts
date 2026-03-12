@@ -1,20 +1,63 @@
-import { apiClient } from '@/lib/apiClient';
-import type { Product, DashboardStats } from '@/types';
+import { apiClient } from "@/lib/apiClient";
+import type { Product, DashboardStats } from "@/types";
 
 export const adminService = {
-  getDashboard: () =>
-    apiClient.get<DashboardStats>('/api/admin/dashboard'),
+  getDashboard: () => apiClient.get<DashboardStats>("/admin/dashboard"),
+
+  // Categories
+  getCategories: () =>
+    apiClient.get<
+      { id: string; name: string; slug: string; created_at: string }[]
+    >("/products/categories"),
+
+  createCategory: (data: { name: string; slug: string }) =>
+    apiClient.post<{
+      id: string;
+      name: string;
+      slug: string;
+      created_at: string;
+    }>("/products/categories", data),
+
+  updateCategory: (id: string, data: { name: string; slug: string }) =>
+    apiClient.put<{
+      id: string;
+      name: string;
+      slug: string;
+      created_at: string;
+    }>(`/products/categories/${id}`, data),
+
+  deleteCategory: (id: string) =>
+    apiClient.delete<{ message: string }>(`/products/categories/${id}`),
 
   // Products
-  getProducts: (page = 1) =>
-    apiClient.get<{ data: Product[]; total: number }>('/api/admin/products', { page }),
+  getProducts: (page = 1, limit = 20) =>
+    apiClient.get("/products/products", {
+      params: { limit, offset: (page - 1) * limit },
+    }),
 
-  createProduct: (data: Partial<Product>) =>
-    apiClient.post<Product>('/api/admin/products', data),
+  createProduct: (data: any) => apiClient.post<Product>("/products/products", data),
 
-  updateProduct: (id: string, data: Partial<Product>) =>
-    apiClient.put<Product>(`/api/admin/products/${id}`, data),
+  updateProduct: (id: string, data: any) =>
+    apiClient.put<Product>(`/products/products/${id}`, data),
 
   deleteProduct: (id: string) =>
-    apiClient.delete<void>(`/api/admin/products/${id}`),
+    apiClient.delete<{ message: string }>(`/products/products/${id}`),
+
+  // Product Images
+  getProductImages: (productId: string) =>
+    apiClient.get("/products/products/${productId}/images"),
+
+  addProductImage: (
+    productId: string,
+    data: { image_url: string; alt_text?: string; sort_order?: number },
+  ) => apiClient.post("/products/products/${productId}/images", data),
+
+  updateProductImage: (
+    productId: string,
+    imageId: string,
+    data: { image_url: string; alt_text?: string; sort_order?: number },
+  ) => apiClient.put("/products/products/${productId}/images/${imageId}", data),
+
+  deleteProductImage: (productId: string, imageId: string) =>
+    apiClient.delete("/products/products/${productId}/images/${imageId}"),
 };

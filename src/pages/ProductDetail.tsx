@@ -63,9 +63,10 @@ export default function ProductDetail() {
 
   const formatPrice = (price: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(price);
 
-  const isAvailable = product.stock_status === 'in-stock';
-  const isOutOfStock = product.stock_status === 'out-of-stock';
-  const isUpcoming = product.stock_status === 'upcoming';
+  const isAvailable = product.stock > 0;
+  const isOutOfStock = product.stock === 0;
+  // const isUpcoming = product.stock_status === 'upcoming';
+  const isUpcoming = false
 
   const handleAddToCart = () => {
     if (!isAvailable) return;

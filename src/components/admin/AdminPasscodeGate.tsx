@@ -1,33 +1,27 @@
-import { useState } from 'react';
-import { useAdminAuth } from '@/contexts/AdminAuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lock, AlertCircle } from 'lucide-react';
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Lock, AlertCircle } from "lucide-react";
 
 export function AdminPasscodeGate({ children }: { children: React.ReactNode }) {
-  const { isAdminAuthenticated, verifyPasscode } = useAdminAuth();
-  const [passcode, setPasscode] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, isAuthenticated } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+  console.log(
+    "AdminPasscodeGate - user:",
+    user,
+    "isAuthenticated:",
+    isAuthenticated,
+  );
 
-    // Small delay for UX
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    if (verifyPasscode(passcode)) {
-      setPasscode('');
-    } else {
-      setError('Invalid passcode. Please try again.');
-    }
-    setIsLoading(false);
-  };
-
-  if (isAdminAuthenticated) {
+  if (isAuthenticated && user?.role === "admin") {
     return <>{children}</>;
   }
 
@@ -40,31 +34,14 @@ export function AdminPasscodeGate({ children }: { children: React.ReactNode }) {
           </div>
           <CardTitle>Admin Access</CardTitle>
           <CardDescription>
-            Enter the admin passcode to continue
+            You need admin privileges to access this area. Please log in with an
+            admin account.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Input
-                type="password"
-                placeholder="Enter passcode"
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                className="text-center text-lg tracking-widest"
-                autoFocus
-              />
-            </div>
-            {error && (
-              <div className="flex items-center gap-2 text-destructive text-sm">
-                <AlertCircle className="h-4 w-4" />
-                {error}
-              </div>
-            )}
-            <Button type="submit" className="w-full" disabled={isLoading || !passcode}>
-              {isLoading ? 'Verifying...' : 'Access Admin Panel'}
-            </Button>
-          </form>
+          <p className="text-center text-muted-foreground">
+            If you believe you should have access, please contact support.
+          </p>
         </CardContent>
       </Card>
     </div>

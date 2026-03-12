@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://api.example.com';
+const API_BASE_URL = 'http://localhost:3000';
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;

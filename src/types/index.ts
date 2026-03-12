@@ -1,6 +1,6 @@
 // ===== Core Entities =====
 
-export type StockStatus = 'in-stock' | 'out-of-stock' | 'upcoming';
+export type StockStatus = "in-stock" | "out-of-stock" | "upcoming";
 
 export interface Product {
   id: string;
@@ -48,9 +48,10 @@ export interface Category {
 
 export interface User {
   id: string;
-  name: string;
+  full_name: string;
   email: string;
   phone?: string;
+  role?: string;
 }
 
 export interface Address {

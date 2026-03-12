@@ -7,7 +7,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, phone: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
@@ -39,8 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authService.login(email, password);
       localStorage.setItem(TOKEN_KEY, response.token);
-      localStorage.setItem(USER_KEY, JSON.stringify(response.user));
-      setUser(response.user);
+      // Fetch profile to get full user data including role
+      const profile = await authService.getProfile();
+      localStorage.setItem(USER_KEY, JSON.stringify(profile));
+      setUser(profile);
       return { success: true };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : 'Login failed' };
@@ -49,13 +51,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const register = async (name: string, email: string, phone: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
     try {
-      const response = await authService.register(name, email, password);
-      localStorage.setItem(TOKEN_KEY, response.token);
-      localStorage.setItem(USER_KEY, JSON.stringify(response.user));
-      setUser(response.user);
+      await authService.register(name, email, phone, password);
       return { success: true };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : 'Registration failed' };

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/lib/apiClient";
 import { useCreateProduct, useUpdateProduct } from "@/hooks/useAdmin";
 import { useProductById } from "@/hooks/useProducts";
+import { productService } from "@/services/productService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +18,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, X, GripVertical, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  X,
+  GripVertical,
+  Loader2,
+  Upload,
+  Image as ImageIcon,
+} from "lucide-react";
 import type { ProductImage, StockStatus } from "@/types";
 
 export default function AdminProductForm() {
@@ -82,8 +91,64 @@ export default function AdminProductForm() {
     ],
   );
 
+  const [uploadingImages, setUploadingImages] = useState<boolean[]>([]);
+
   const handleChange = (field: string, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageChange = (
+    index: number,
+    field: keyof ProductImage,
+    value: string,
+  ) => {
+    setImages((prev) =>
+      prev.map((img, i) => (i === index ? { ...img, [field]: value } : img)),
+    );
+  };
+
+  const handleFileUpload = async (index: number, file: File) => {
+    setUploadingImages((prev) => {
+      const newUploading = [...prev];
+      newUploading[index] = true;
+      return newUploading;
+    });
+
+    try {
+      const response = await productService.uploadImage(file);
+      handleImageChange(index, "url", response.url);
+      toast({
+        title: "Image uploaded",
+        description: "Image has been uploaded successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload image",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingImages((prev) => {
+        const newUploading = [...prev];
+        newUploading[index] = false;
+        return newUploading;
+      });
+    }
+  };
+
+  const addImageSlot = () => {
+    setImages((prev) => [
+      ...prev,
+      { url: "", alt_text: "", sort_order: prev.length },
+    ]);
+    setUploadingImages((prev) => [...prev, false]);
+  };
+
+  const removeImageSlot = (index: number) => {
+    if (images.length > 1) {
+      setImages((prev) => prev.filter((_, i) => i !== index));
+      setUploadingImages((prev) => prev.filter((_, i) => i !== index));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,6 +188,7 @@ export default function AdminProductForm() {
 
     try {
       let product;
+      let productId = id;
       if (isEditing && id) {
         const result = await updateProduct.mutateAsync({
           id,
@@ -133,19 +199,19 @@ export default function AdminProductForm() {
         if (existingProduct?.images) {
           for (const img of existingProduct.images) {
             if (img.id) {
-              await apiClient.delete(`/products/${id}/images/${img.id}`);
+              await apiClient.delete(`/products/images/${id}/${img.id}`);
             }
           }
         }
       } else {
         const result = await createProduct.mutateAsync(productData);
         product = result;
-        id = product.id;
+        productId = product.id;
       }
 
       // Add new images
       for (const img of validImages) {
-        await apiClient.post(`/products/${id}/images`, {
+        await apiClient.post(`/products/images/${productId}`, {
           image_url: img.url,
           alt_text: img.alt_text || undefined,
           sort_order: img.sort_order,
@@ -286,7 +352,7 @@ export default function AdminProductForm() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => "imageslot"}
+                  onClick={addImageSlot}
                 >
                   <Plus className="h-4 w-4 mr-1" /> Add Image
                 </Button>
@@ -303,12 +369,55 @@ export default function AdminProductForm() {
                 >
                   <GripVertical className="h-5 w-5 text-muted-foreground mt-2 flex-shrink-0" />
                   <div className="flex-1 space-y-2">
+                    {!img.url ? (
+                      <div className="space-y-2">
+                        <Label className="text-sm">
+                          Upload Image {idx + 1}
+                        </Label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleFileUpload(idx, file);
+                            }}
+                            disabled={uploadingImages[idx]}
+                            className="flex-1"
+                          />
+                          {uploadingImages[idx] && (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Or paste URL below
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <ImageIcon className="h-4 w-4" />
+                          <span className="text-sm font-medium">
+                            Image {idx + 1}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleImageChange(idx, "url", "")}
+                          >
+                            Change
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                     <Input
                       value={img.url}
                       onChange={(e) =>
                         handleImageChange(idx, "url", e.target.value)
                       }
                       placeholder={`Image URL ${idx + 1}`}
+                      disabled={uploadingImages[idx]}
                     />
                     <Input
                       value={img.alt_text || ""}

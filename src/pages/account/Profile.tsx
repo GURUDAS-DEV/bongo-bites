@@ -13,7 +13,7 @@ export default function Profile() {
   const { user, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || '',
+    name: user?.full_name || '',
     email: user?.email || '',
     phone: user?.phone || '',
   });

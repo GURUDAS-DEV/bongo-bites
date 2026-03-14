@@ -2,7 +2,7 @@ import { apiClient } from "@/lib/apiClient";
 import type { Product, DashboardStats } from "@/types";
 
 export const adminService = {
-  getDashboard: () => apiClient.get<DashboardStats>("/admin/dashboard"),
+  getDashboard: () => apiClient.get<DashboardStats>("/store/admin/dashboard"),
 
   // Categories
   getCategories: () =>

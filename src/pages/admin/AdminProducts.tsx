@@ -39,7 +39,7 @@ export default function AdminProducts() {
     });
   }, []);
 
-  const products = data || [];
+  const products = data?.data || [];
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name
       .toLowerCase()
@@ -200,12 +200,12 @@ export default function AdminProducts() {
         </div>
       )}
 
-      {/* <DeleteConfirmModal
+      <DeleteConfirmModal
         open={deleteModal.open}
         onOpenChange={(open) => setDeleteModal({ open, product: null })}
         productName={deleteModal.product?.name || ""}
-        onConfirm={handleDelete}
-      /> */}
+        onConfirm={() => deleteProduct.mutate(deleteModal.product!.id)}
+      />
     </div>
   );
 }

@@ -19,6 +19,9 @@ export const productService = {
   getBySlug: (slug: string) =>
     apiClient.get<Product>(`/products/products/${slug}`),
 
+  getById: (id: string) =>
+    apiClient.get<Product>(`/products/products/id/${id}`),
+
   getByCategory: (categorySlug: string, page = 1) =>
     apiClient.get<PaginatedResponse<Product>>(`/products/category/${categorySlug}`, { page, per_page: 20 }),
 

@@ -16,6 +16,14 @@ export function useProduct(slug: string) {
   });
 }
 
+
+export function useProductById(id: string) {
+  return useQuery({
+    queryKey: ['product', id],
+    queryFn: () => productService.getById(id),
+    enabled: !!id,
+  });
+}
 export function useProductsByCategory(categorySlug: string, page = 1) {
   return useQuery({
     queryKey: ['products', 'category', categorySlug, page],

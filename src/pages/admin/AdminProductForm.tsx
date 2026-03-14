@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/lib/apiClient";
 import { useCreateProduct, useUpdateProduct } from "@/hooks/useAdmin";
-import { useProduct } from "@/hooks/useProducts";
+import { useProductById } from "@/hooks/useProducts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,7 +26,7 @@ export default function AdminProductForm() {
   const { toast } = useToast();
   const isEditing = !!id;
 
-  const { data: existingProduct } = useProduct(id || "");
+  const { data: existingProduct } = useProductById(id || "");
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
 
@@ -54,10 +54,22 @@ export default function AdminProductForm() {
 
   useEffect(() => {
     if (existingProduct && categories.length > 0) {
-      const cat = categories.find(
-        (c) => c.slug === existingProduct.category_slug,
-      );
-      setForm((prev) => ({ ...prev, category_id: cat?.id || "" }));
+      console.log(existingProduct, categories);
+      const cat = categories.find((c) => c.slug === existingProduct.slug);
+      setForm({
+        name: existingProduct?.name || "",
+        description: existingProduct?.description || "",
+        price: existingProduct?.price?.toString() || "",
+        sale_price: existingProduct?.sale_price?.toString() || "",
+        sku: existingProduct?.sku || "",
+        stock: existingProduct?.stock?.toString() || "0",
+        weight: existingProduct?.weight || "",
+        size_or_dimensions: existingProduct?.size_or_dimensions || "",
+        stock_status: (existingProduct?.stock_status ||
+          "in-stock") as StockStatus,
+        is_visible: existingProduct?.is_visible ?? true,
+        category_id: cat?.id || "",
+      });
     }
   }, [existingProduct, categories]);
 
@@ -76,6 +88,8 @@ export default function AdminProductForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    console.log(form.name, form.price, form.category_id);
 
     if (!form.name || !form.price || !form.category_id) {
       toast({

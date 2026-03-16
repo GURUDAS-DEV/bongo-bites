@@ -21,7 +21,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(price);
   };
 
-  const mainImage = product.images?.[0]?.url || '';
+  const mainImage = product.images?.[0] || '';
   const discountPercentage = product.sale_price && product.price > product.sale_price
     ? Math.round(((product.price - product.sale_price) / product.price) * 100)
     : 0;

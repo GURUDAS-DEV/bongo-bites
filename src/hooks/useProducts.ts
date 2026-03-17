@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { productService, type ProductFilters } from '@/services/productService';
 
 export function useProducts(filters?: ProductFilters) {
@@ -36,5 +36,11 @@ export function useCategories() {
   return useQuery({
     queryKey: ['categories'],
     queryFn: () => productService.getCategories(),
+  });
+}
+
+export function useRecordProductView() {
+  return useMutation({
+    mutationFn: (id: string) => productService.recordView(id),
   });
 }

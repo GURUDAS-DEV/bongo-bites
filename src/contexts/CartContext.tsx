@@ -1,5 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { toast } from 'sonner';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { toast } from "sonner";
 
 export interface CartItem {
   id: string;
@@ -13,7 +19,7 @@ export interface CartItem {
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
+  addToCart: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -25,7 +31,7 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-const CART_STORAGE_KEY = 'bongohridoy_cart';
+const CART_STORAGE_KEY = "bongohridoy_cart";
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -38,7 +44,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       try {
         setItems(JSON.parse(savedCart));
       } catch (e) {
-        console.error('Failed to parse cart from localStorage');
+        console.error("Failed to parse cart from localStorage");
       }
     }
   }, []);
@@ -48,13 +54,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
-  const addToCart = (item: Omit<CartItem, 'quantity'>, quantity = 1) => {
+  const addToCart = (item: Omit<CartItem, "quantity">, quantity = 1) => {
     setItems((prevItems) => {
       const existingItem = prevItems.find((i) => i.id === item.id);
       if (existingItem) {
         toast.success(`Updated ${item.name} quantity in cart`);
         return prevItems.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i
+          i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i,
         );
       }
       toast.success(`${item.name} added to cart!`);
@@ -77,19 +83,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
     setItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === id ? { ...item, quantity } : item
-      )
+      prevItems.map((item) => (item.id === id ? { ...item, quantity } : item)),
     );
   };
 
   const clearCart = () => {
     setItems([]);
-    toast.success('Cart cleared');
+    toast.success("Cart cleared");
   };
 
   const getCartTotal = () => {
-    return items.reduce((total, item) => total + item.price * item.quantity, 0);
+    return items.reduce(
+      (total, item) => total + Number(item.price) * item.quantity,
+      0,
+    );
   };
 
   const getCartCount = () => {
@@ -118,7 +125,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 export function useCart() {
   const context = useContext(CartContext);
   if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider');
+    throw new Error("useCart must be used within a CartProvider");
   }
   return context;
 }

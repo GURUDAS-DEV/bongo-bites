@@ -28,7 +28,7 @@ export const productService = {
     apiClient.get<Product>(`/products/products/${slug}`),
 
   getById: (id: string) =>
-    apiClient.get<Product>(`/products/products/id/${id}`),
+    apiClient.get<Product>(`/products/id/${id}`),
 
   getByCategory: (categorySlug: string, page = 1) =>
     apiClient.get<PaginatedResponse<Product>>(
@@ -89,4 +89,6 @@ export const productService = {
 
     return response.json() as Promise<{ url: string }>;
   },
+
+  recordView: (id: string) => apiClient.post(`/products/view/${id}`),
 };

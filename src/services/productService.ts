@@ -27,8 +27,7 @@ export const productService = {
   getBySlug: (slug: string) =>
     apiClient.get<Product>(`/products/products/${slug}`),
 
-  getById: (id: string) =>
-    apiClient.get<Product>(`/products/id/${id}`),
+  getById: (id: string) => apiClient.get<Product>(`/products/id/${id}`),
 
   getByCategory: (categorySlug: string, page = 1) =>
     apiClient.get<PaginatedResponse<Product>>(
@@ -59,6 +58,9 @@ export const productService = {
 
   deleteProductImage: (productId: string, imageId: string) =>
     apiClient.delete(`/products/images/${productId}/${imageId}`),
+
+  notifyMe: (productId: string) =>
+    apiClient.post(`/products/notify-me`, { product_id: productId }),
 
   // Upload image to Cloudflare R2
   uploadImage: async (file: File) => {

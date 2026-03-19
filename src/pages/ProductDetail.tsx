@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import {
+  useNotifyMe,
   useProduct,
   useProducts,
   useRecordProductView,
@@ -37,6 +38,7 @@ export default function ProductDetail() {
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
   const addToWishlist = useAddToWishlist();
+  const notifyMe = useNotifyMe();
   const { toast } = useToast();
   const recordView = useRecordProductView();
   const [quantity, setQuantity] = useState(1);
@@ -132,10 +134,23 @@ export default function ProductDetail() {
     toast({ title: "Added to wishlist" });
   };
 
-  const handleNotifyMe = () => {
-    toast({
-      title: "You'll be notified!",
-      description: `We'll let you know when "${product.name}" becomes available.`,
+  const handleNotifyMe = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    notifyMe.mutate(product.id, {
+      onSuccess: () => {
+        toast({
+          title: "You're on the list!",
+          description: `We'll ping you when "${product.name}" is back.`,
+        });
+      },
+      onError: () => {
+        toast({
+          title: "Something went wrong",
+          description: "Try again in a bit.",
+        });
+      },
     });
   };
 

@@ -44,3 +44,9 @@ export function useRecordProductView() {
     mutationFn: (id: string) => productService.recordView(id),
   });
 }
+
+export function useNotifyMe() {
+  return useMutation({
+    mutationFn: (productId: string) => productService.notifyMe(productId),
+  });
+}

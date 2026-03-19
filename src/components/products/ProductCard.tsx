@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAddToWishlist } from '@/hooks/useWishlist';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useNotifyMe } from '@/hooks/useProducts';
 
 interface ProductCardProps {
   product: Product;
@@ -41,11 +42,27 @@ export default function ProductCard({ product }: ProductCardProps) {
     });
   };
 
-  const handleNotifyMe = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toast({ title: "You'll be notified!", description: `We'll let you know when "${product.name}" becomes available.` });
-  };
+const notifyMe = useNotifyMe();
+
+const handleNotifyMe = (e: React.MouseEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  notifyMe.mutate(product.id, {
+    onSuccess: () => {
+      toast({
+        title: "You're on the list!",
+        description: `We'll ping you when "${product.name}" is back.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Something went wrong",
+        description: "Try again in a bit.",
+      });
+    },
+  });
+};
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();

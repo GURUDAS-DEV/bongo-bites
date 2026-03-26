@@ -9,6 +9,7 @@ export interface Product {
   price: number;
   sale_price?: number;
   category: string;
+  category_id: string;
   category_slug: string;
   sku?: string;
   stock: number;

@@ -7,7 +7,7 @@ import type {
 } from "@/types";
 
 export interface ProductFilters {
-  category?: string;
+  category?: string | string[];
   min_price?: number;
   max_price?: number;
   in_stock?: boolean;

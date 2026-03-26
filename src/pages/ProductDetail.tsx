@@ -102,10 +102,9 @@ export default function ProductDetail() {
       maximumFractionDigits: 0,
     }).format(price);
 
-  const isAvailable = product.stock > 0;
-  const isOutOfStock = product.stock === 0;
-  // const isUpcoming = product.stock_status === 'upcoming';
-  const isUpcoming = false;
+  const isAvailable = product.stock_status === 'in-stock';
+  const isOutOfStock = product.stock_status === 'out-of-stock';
+  const isUpcoming = product.stock_status === 'upcoming';
 
   const handleAddToCart = () => {
     if (!isAvailable) return;
@@ -172,7 +171,7 @@ export default function ProductDetail() {
               to={`/category/${product.category_slug}`}
               className="breadcrumb-link"
             >
-              {product.category}
+              {product.category_name}
             </Link>
             <span>/</span>
             <span className="text-foreground line-clamp-1">{product.name}</span>

@@ -64,7 +64,7 @@ export default function AdminProductForm() {
   useEffect(() => {
     if (existingProduct && categories.length > 0) {
       console.log(existingProduct, categories);
-      const cat = categories.find((c) => c.slug === existingProduct.slug);
+      const cat = categories.find((c) => c.id === existingProduct.category_id);
       setForm({
         name: existingProduct?.name || "",
         description: existingProduct?.description || "",
@@ -184,6 +184,7 @@ export default function AdminProductForm() {
       keywords: [], // backend expects array
       is_bestseller: false, // not in form
       is_visible: form.is_visible,
+      stock_status: form.stock_status,
     };
 
     try {
@@ -226,7 +227,7 @@ export default function AdminProductForm() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to save product",
+        description: error.message || "Failed to save product",
         variant: "destructive",
       });
     }

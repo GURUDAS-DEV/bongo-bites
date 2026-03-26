@@ -49,8 +49,8 @@ export default function AdminProducts() {
     return matchesSearch && matchesCategory;
   });
 
-  const getStockStatus = (stock: number) =>
-    stock > 0 ? "in-stock" : "out-of-stock";
+  const getStockStatus = (stock: string) =>
+    stock === "in-stock" ? "in-stock" : "out-of-stock";
 
   const getStockBadge = (status: StockStatus) => {
     const config: Record<
@@ -162,7 +162,7 @@ export default function AdminProducts() {
                       ₹{product.sale_price || product.price}
                     </td>
                     <td className="py-3 px-4">
-                      {getStockBadge(getStockStatus(product.stock))}
+                      {getStockBadge(getStockStatus(product.stock_status))}
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">

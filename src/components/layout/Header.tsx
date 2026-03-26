@@ -317,7 +317,7 @@ export default function Header() {
                                 >
                                   {product.images?.[0] && (
                                     <img
-                                      src={product.images[0].url}
+                                      src={product.images[0]}
                                       alt=""
                                       className="w-10 h-10 rounded object-cover"
                                       loading="lazy"

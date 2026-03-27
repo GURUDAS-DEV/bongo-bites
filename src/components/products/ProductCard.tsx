@@ -26,7 +26,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const discountPercentage = product.sale_price && product.price > product.sale_price
     ? Math.round(((product.price - product.sale_price) / product.price) * 100)
     : 0;
-  const displayPrice = product.sale_price || product.price;
+  const displayPrice = product.sale_price;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -142,8 +142,8 @@ const handleNotifyMe = (e: React.MouseEvent) => {
           ) : (
             <>
               <span className="text-lg font-bold">{formatPrice(displayPrice)}</span>
-              {product.sale_price && product.price > product.sale_price && (
-                <span className="text-sm text-muted-foreground line-through">{formatPrice(product.price)}</span>
+              {product.sale_price && Number(product.price) > Number(product.sale_price) && (
+                <span className="text-sm text-muted-foreground line-through">{formatPrice(Number(product.price))}</span>
               )}
             </>
           )}

@@ -20,7 +20,7 @@ export const orderService = {
     apiClient.get<Order>(`/store/admin/orders/${id}`),
 
   adminCreateManual: (data: Record<string, unknown>) =>
-    apiClient.post<Order>('/store/admin/orders/manual', data),
+    apiClient.post<Order>('/store/admin/manual-order', data),
 
   adminUpdateStatus: (id: string, status: string) =>
     apiClient.put<Order>(`/store/admin/orders/${id}`, { status }),

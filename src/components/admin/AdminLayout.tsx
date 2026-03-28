@@ -11,13 +11,15 @@ import {
   Menu,
   X,
   ChevronLeft,
-  BookOpen
+  BookOpen,
+  ShoppingCart,
 } from "lucide-react";
 
 const navItems = [
   { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { title: "Products", href: "/admin/products", icon: Package },
   { title: "Blog", href: "/admin/blog", icon: BookOpen },
+  { title: "Manual Order", href: "/admin/manual-order", icon: ShoppingCart },
 ];
 
 export function AdminLayout() {

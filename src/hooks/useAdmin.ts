@@ -55,3 +55,15 @@ export function useDeleteProduct() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'products'] }),
   });
 }
+
+export function useCreateManualOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { user_id?: string; email?: string; address?: string; items: { product_id: string; quantity: number }[] }) =>
+      orderService.adminCreateManual(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+    },
+  });
+}

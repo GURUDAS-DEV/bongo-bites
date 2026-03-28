@@ -27,6 +27,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminProductForm from "./pages/admin/AdminProductForm";
 import AdminBlog from "./pages/admin/AdminBlog";
+import AdminManualOrder from "./pages/admin/AdminManualOrder";
 
 const queryClient = new QueryClient();
 
@@ -56,7 +57,7 @@ const App = () => (
                 <Route path="/blogs" element={<Blogs />} />
                 <Route path="/blog/:slug" element={<BlogDetail />} />
                 <Route path="/our-story" element={<OurStory />} />
-                
+
                 {/* Admin Routes */}
                 <Route path="/admin" element={<AdminLayout />}>
                   <Route index element={<AdminDashboard />} />
@@ -65,8 +66,9 @@ const App = () => (
                   <Route path="products/new" element={<AdminProductForm />} />
                   <Route path="products/:id" element={<AdminProductForm />} />
                   <Route path="blog" element={<AdminBlog />} />
+                  <Route path="manual-order" element={<AdminManualOrder />} />
                 </Route>
-                
+
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

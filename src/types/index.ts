@@ -25,7 +25,7 @@ export interface Product {
   is_visible?: boolean;
   seo_title?: string;
   meta_description?: string;
-  seo_keywords?: string[];
+  keywords?: string[];
   purchase_price?: number;
   created_at?: string;
   updated_at?: string;

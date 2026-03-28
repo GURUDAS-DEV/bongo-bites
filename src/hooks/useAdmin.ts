@@ -67,3 +67,17 @@ export function useCreateManualOrder() {
     },
   });
 }
+
+export function useUpdateOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { status?: string } }) =>
+      orderService.adminUpdateStatus(id, data),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+    },
+  });
+}

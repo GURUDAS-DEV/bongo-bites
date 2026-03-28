@@ -24,10 +24,14 @@ import {
   X,
   GripVertical,
   Loader2,
-  Upload,
   Image as ImageIcon,
 } from "lucide-react";
 import type { ProductImage, StockStatus } from "@/types";
+
+// Extends ProductImage to track whether this slot already exists on the server
+interface ImageSlot extends ProductImage {
+  existingId?: string; // present = already saved, absence = new upload
+}
 
 export default function AdminProductForm() {
   const { id } = useParams();
@@ -48,49 +52,66 @@ export default function AdminProductForm() {
   }, []);
 
   const [form, setForm] = useState({
-    name: existingProduct?.name || "",
-    description: existingProduct?.description || "",
+    name: "",
+    description: "",
     category_id: "",
-    price: existingProduct?.price?.toString() || "",
-    sale_price: existingProduct?.sale_price?.toString() || "",
-    sku: existingProduct?.sku || "",
-    stock: existingProduct?.stock?.toString() || "0",
-    weight: existingProduct?.weight || "",
-    size_or_dimensions: existingProduct?.size_or_dimensions || "",
-    stock_status: (existingProduct?.stock_status || "in-stock") as StockStatus,
-    is_visible: existingProduct?.is_visible ?? true,
+    price: "",
+    sale_price: "",
+    purchase_price: "",
+    sku: "",
+    stock: "0",
+    weight: "",
+    size_or_dimensions: "",
+    stock_status: "in-stock" as StockStatus,
+    is_visible: true,
+    keywords: "",
   });
 
+  // Sync form + images once existingProduct and categories are both loaded
   useEffect(() => {
     if (existingProduct && categories.length > 0) {
-      console.log(existingProduct, categories);
       const cat = categories.find((c) => c.id === existingProduct.category_id);
       setForm({
-        name: existingProduct?.name || "",
-        description: existingProduct?.description || "",
-        price: existingProduct?.price?.toString() || "",
-        sale_price: existingProduct?.sale_price?.toString() || "",
-        sku: existingProduct?.sku || "",
-        stock: existingProduct?.stock?.toString() || "0",
-        weight: existingProduct?.weight || "",
-        size_or_dimensions: existingProduct?.size_or_dimensions || "",
-        stock_status: (existingProduct?.stock_status ||
+        name: existingProduct.name || "",
+        description: existingProduct.description || "",
+        price: existingProduct.price?.toString() || "",
+        sale_price: existingProduct.sale_price?.toString() || "",
+        purchase_price: existingProduct.purchase_price?.toString() || "",
+        sku: existingProduct.sku || "",
+        stock: existingProduct.stock?.toString() || "0",
+        weight: existingProduct.weight || "",
+        size_or_dimensions: existingProduct.size_or_dimensions || "",
+        stock_status: (existingProduct.stock_status ||
           "in-stock") as StockStatus,
-        is_visible: existingProduct?.is_visible ?? true,
+        is_visible: existingProduct.is_visible ?? true,
         category_id: cat?.id || "",
+        keywords: existingProduct.keywords?.join(", ") || "",
       });
+
+      // FIX 1: Populate image slots from existing product, tagging each with its server id
+      if (existingProduct.images?.length) {
+        setImages(
+          existingProduct.images.map((img) => ({
+            url: img.url,
+            alt_text: img.alt_text || "",
+            sort_order: img.sort_order,
+            existingId: img.id, // mark as already on server
+          })),
+        );
+      } else {
+        setImages(defaultEmptySlots());
+      }
     }
   }, [existingProduct, categories]);
 
-  const [images, setImages] = useState<ProductImage[]>(
-    existingProduct?.images || [
-      { url: "", alt_text: "", sort_order: 0 },
-      { url: "", alt_text: "", sort_order: 1 },
-      { url: "", alt_text: "", sort_order: 2 },
-      { url: "", alt_text: "", sort_order: 3 },
-    ],
-  );
+  const defaultEmptySlots = (): ImageSlot[] =>
+    Array.from({ length: 4 }, (_, i) => ({
+      url: "",
+      alt_text: "",
+      sort_order: i,
+    }));
 
+  const [images, setImages] = useState<ImageSlot[]>(defaultEmptySlots());
   const [uploadingImages, setUploadingImages] = useState<boolean[]>([]);
 
   const handleChange = (field: string, value: string | boolean) => {
@@ -99,7 +120,7 @@ export default function AdminProductForm() {
 
   const handleImageChange = (
     index: number,
-    field: keyof ProductImage,
+    field: keyof ImageSlot,
     value: string,
   ) => {
     setImages((prev) =>
@@ -109,19 +130,22 @@ export default function AdminProductForm() {
 
   const handleFileUpload = async (index: number, file: File) => {
     setUploadingImages((prev) => {
-      const newUploading = [...prev];
-      newUploading[index] = true;
-      return newUploading;
+      const next = [...prev];
+      next[index] = true;
+      return next;
     });
-
     try {
       const response = await productService.uploadImage(file);
-      handleImageChange(index, "url", response.url);
-      toast({
-        title: "Image uploaded",
-        description: "Image has been uploaded successfully",
-      });
-    } catch (error) {
+      // New upload — no existingId, so it will be treated as a new image on save
+      setImages((prev) =>
+        prev.map((img, i) =>
+          i === index
+            ? { ...img, url: response.url, existingId: undefined }
+            : img,
+        ),
+      );
+      toast({ title: "Image uploaded", description: "Uploaded successfully" });
+    } catch {
       toast({
         title: "Upload failed",
         description: "Failed to upload image",
@@ -129,9 +153,9 @@ export default function AdminProductForm() {
       });
     } finally {
       setUploadingImages((prev) => {
-        const newUploading = [...prev];
-        newUploading[index] = false;
-        return newUploading;
+        const next = [...prev];
+        next[index] = false;
+        return next;
       });
     }
   };
@@ -145,16 +169,13 @@ export default function AdminProductForm() {
   };
 
   const removeImageSlot = (index: number) => {
-    if (images.length > 1) {
-      setImages((prev) => prev.filter((_, i) => i !== index));
-      setUploadingImages((prev) => prev.filter((_, i) => i !== index));
-    }
+    if (images.length <= 1) return;
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setUploadingImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    console.log(form.name, form.price, form.category_id);
 
     if (!form.name || !form.price || !form.category_id) {
       toast({
@@ -164,8 +185,6 @@ export default function AdminProductForm() {
       });
       return;
     }
-
-    const validImages = images.filter((img) => img.url.trim());
 
     const productData = {
       name: form.name,
@@ -181,42 +200,57 @@ export default function AdminProductForm() {
       stock: parseInt(form.stock) || 0,
       weight: form.weight || undefined,
       size_or_dimensions: form.size_or_dimensions || undefined,
-      keywords: [], // backend expects array
-      is_bestseller: false, // not in form
+      keywords: form.keywords
+        .split(",")
+        .map((k) => k.trim())
+        .filter(Boolean),
+      is_bestseller: false,
       is_visible: form.is_visible,
       stock_status: form.stock_status,
     };
 
     try {
-      let product;
       let productId = id;
+
       if (isEditing && id) {
-        const result = await updateProduct.mutateAsync({
-          id,
-          data: productData,
-        });
-        product = result;
-        // Delete existing images
+        await updateProduct.mutateAsync({ id, data: productData });
+
+        // FIX 2: Only delete images that were removed (existed on server but are no longer in state)
+        const currentExistingIds = new Set(
+          images.filter((img) => img.existingId).map((img) => img.existingId),
+        );
         if (existingProduct?.images) {
           for (const img of existingProduct.images) {
-            if (img.id) {
+            if (img.id && !currentExistingIds.has(img.id)) {
               await apiClient.delete(`/products/images/${id}/${img.id}`);
             }
           }
         }
+
+        // Only POST images that are new (no existingId) and have a URL
+        const newImages = images.filter(
+          (img) => img.url.trim() && !img.existingId,
+        );
+        for (const img of newImages) {
+          await apiClient.post(`/products/images/${productId}`, {
+            image_url: img.url,
+            alt_text: img.alt_text || undefined,
+            sort_order: img.sort_order,
+          });
+        }
       } else {
         const result = await createProduct.mutateAsync(productData);
-        product = result;
-        productId = product.id;
-      }
+        productId = result.id;
 
-      // Add new images
-      for (const img of validImages) {
-        await apiClient.post(`/products/images/${productId}`, {
-          image_url: img.url,
-          alt_text: img.alt_text || undefined,
-          sort_order: img.sort_order,
-        });
+        // On create, post all images that have a URL
+        const validImages = images.filter((img) => img.url.trim());
+        for (const img of validImages) {
+          await apiClient.post(`/products/images/${productId}`, {
+            image_url: img.url,
+            alt_text: img.alt_text || undefined,
+            sort_order: img.sort_order,
+          });
+        }
       }
 
       toast({
@@ -277,13 +311,24 @@ export default function AdminProductForm() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Description *</Label>
+                <Label>Description</Label>
                 <Textarea
                   value={form.description}
                   onChange={(e) => handleChange("description", e.target.value)}
                   placeholder="Enter product description"
                   rows={4}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>SEO Keywords</Label>
+                <Input
+                  value={form.keywords}
+                  onChange={(e) => handleChange("keywords", e.target.value)}
+                  placeholder="e.g., turmeric, organic, supplement"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Comma-separated keywords for search visibility
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Category *</Label>
@@ -361,7 +406,7 @@ export default function AdminProductForm() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Paste image URLs. Minimum 4 images recommended.
+                Upload or paste image URLs. Minimum 4 images recommended.
               </p>
               {images.map((img, idx) => (
                 <div
@@ -375,7 +420,7 @@ export default function AdminProductForm() {
                         <Label className="text-sm">
                           Upload Image {idx + 1}
                         </Label>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
                           <Input
                             type="file"
                             accept="image/*"
@@ -395,21 +440,24 @@ export default function AdminProductForm() {
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <ImageIcon className="h-4 w-4" />
-                          <span className="text-sm font-medium">
-                            Image {idx + 1}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleImageChange(idx, "url", "")}
-                          >
-                            Change
-                          </Button>
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4" />
+                        <span className="text-sm font-medium">
+                          Image {idx + 1}
+                          {img.existingId && (
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              (saved)
+                            </span>
+                          )}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleImageChange(idx, "url", "")}
+                        >
+                          Change
+                        </Button>
                       </div>
                     )}
                     <Input
@@ -432,7 +480,7 @@ export default function AdminProductForm() {
                   {img.url && (
                     <img
                       src={img.url}
-                      alt=""
+                      alt={img.alt_text || ""}
                       className="w-16 h-16 rounded object-cover flex-shrink-0"
                     />
                   )}
@@ -487,7 +535,7 @@ export default function AdminProductForm() {
                     placeholder="Your cost"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Internal only - never shown to customers
+                    Internal only — never shown to customers
                   </p>
                 </div>
               </div>

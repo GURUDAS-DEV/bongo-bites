@@ -35,7 +35,7 @@ export const productService = {
       { page, per_page: 20 },
     ),
 
-  getCategories: () => apiClient.get<Category[]>("/products/categories"),
+  getCategories: () => apiClient.get<Category[]>("/api/categories"),
 
   // Image-related functions
   getProductImages: (productId: string) =>

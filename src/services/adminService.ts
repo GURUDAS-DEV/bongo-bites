@@ -8,7 +8,7 @@ export const adminService = {
   getCategories: () =>
     apiClient.get<
       { id: string; name: string; slug: string; created_at: string }[]
-    >("/products/categories"),
+    >("/api/categories"),
 
   createCategory: (data: { name: string; slug: string }) =>
     apiClient.post<{
@@ -16,7 +16,7 @@ export const adminService = {
       name: string;
       slug: string;
       created_at: string;
-    }>("/products/categories", data),
+    }>("/api/categories", data),
 
   updateCategory: (id: string, data: { name: string; slug: string }) =>
     apiClient.put<{
@@ -24,10 +24,10 @@ export const adminService = {
       name: string;
       slug: string;
       created_at: string;
-    }>(`/products/categories/${id}`, data),
+    }>(`/api/categories/${id}`, data),
 
   deleteCategory: (id: string) =>
-    apiClient.delete<{ message: string }>(`/products/categories/${id}`),
+    apiClient.delete<{ message: string }>(`/api/categories/${id}`),
 
   // Products
   getProducts: (page = 1, limit = 20) =>

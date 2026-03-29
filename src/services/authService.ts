@@ -3,17 +3,17 @@ import type { AuthResponse, User } from "@/types";
 
 export const authService = {
   login: (email: string, password: string) =>
-    apiClient.post<AuthResponse>("/auth/login", { email, password }),
+    apiClient.post<AuthResponse>("/api/auth/login", { email, password }),
 
   register: (name: string, email: string, phone: string, password: string) =>
-    apiClient.post<{ message: string }>("/auth/signup", {
+    apiClient.post<{ message: string }>("/api/auth/register", {
       full_name: name,
       email,
       phone,
       password,
     }),
 
-  getProfile: () => apiClient.get<User>("/profile"),
+  getProfile: () => apiClient.get<User>("/api/auth/me"),
 
   updateProfile: (data: Partial<User>) =>
     apiClient.put<User>("/api/auth/profile", data),

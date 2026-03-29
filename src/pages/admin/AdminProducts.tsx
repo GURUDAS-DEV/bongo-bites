@@ -33,7 +33,7 @@ export default function AdminProducts() {
   >([]);
 
   useEffect(() => {
-    apiClient.get("/products/categories").then((res) => {
+    apiClient.get("/api/categories").then((res) => {
       console.log(res);
       setCategories(res);
     });

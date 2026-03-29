@@ -48,7 +48,7 @@ export default function AdminProductForm() {
   >([]);
 
   useEffect(() => {
-    apiClient.get("/products/categories").then((res) => setCategories(res));
+    apiClient.get("/api/categories").then((res) => setCategories(res));
   }, []);
 
   const [form, setForm] = useState({

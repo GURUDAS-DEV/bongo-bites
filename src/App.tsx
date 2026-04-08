@@ -30,6 +30,7 @@ import AdminProducts from "./pages/admin/AdminProducts";
 import AdminProductForm from "./pages/admin/AdminProductForm";
 import AdminBlog from "./pages/admin/AdminBlog";
 import AdminManualOrder from "./pages/admin/AdminManualOrder";
+import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,7 @@ const App = () => (
                   <Route path="products/:id" element={<AdminProductForm />} />
                   <Route path="blog" element={<AdminBlog />} />
                   <Route path="manual-order" element={<AdminManualOrder />} />
+                  <Route path="payment-settings" element={<AdminPaymentSettings />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />

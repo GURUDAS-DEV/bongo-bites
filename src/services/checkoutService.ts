@@ -11,7 +11,7 @@ interface InitiateCheckoutPayload {
   subtotal: number;
   shipping_charge: number;
   total: number;
-  payment_gateway: "phonepe";
+  payment_gateway: string;
 }
 
 interface InitiateCheckoutResponse {
@@ -20,8 +20,8 @@ interface InitiateCheckoutResponse {
   subtotal?: number;
   shipping_charge?: number;
   total?: number;
-  checkout_url: string;
-  payment_gateway: "phonepe";
+  checkout_url?: string;
+  payment_gateway: string;
 }
 
 interface CheckoutStatusResponse {

@@ -1,26 +1,55 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { CreditCard, MapPin, ShoppingBag, Truck } from "lucide-react";
+import { CreditCard, MapPin, ShoppingBag, Truck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Layout from "@/components/layout/Layout";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAddresses } from "@/hooks/useAddresses";
+import { usePublicPaymentMethods } from "@/hooks/useAdmin";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { checkoutService } from "@/services/checkoutService";
+import type { PaymentMethod } from "@/services/adminService";
+
+const PAYMENT_METHOD_LABELS: Record<string, { label: string; description: string }> = {
+  cash_on_delivery: { 
+    label: "Cash on Delivery", 
+    description: "Pay when you receive your order"
+  },
+  phonepe: { 
+    label: "PhonePe", 
+    description: "Continue with Phone Pay for UPI, Net Banking & Credit/Debit Card"
+  },
+};
+
+function getPaymentMethodInfo(method: string) {
+  return (
+    PAYMENT_METHOD_LABELS[method] || {
+      label: method.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+      icon: "💳",
+      description: "Select this payment method",
+    }
+  );
+}
 
 export default function Checkout() {
   const { isAuthenticated } = useAuth();
   const { items, getCartTotal } = useCart();
   const { data: addresses, isLoading: isAddressLoading } = useAddresses();
+  const { data: paymentMethods, isLoading: isPaymentMethodsLoading } = usePublicPaymentMethods();
+
+  // Debug logging
+  useEffect(() => {
+    console.log('paymentMethods data:', paymentMethods);
+    console.log('isPaymentMethodsLoading:', isPaymentMethodsLoading);
+  }, [paymentMethods, isPaymentMethodsLoading]);
 
   const [selectedAddress, setSelectedAddress] = useState<string>("");
-  const [selectedPaymentGateway, setSelectedPaymentGateway] =
-    useState<string>("");
+  const [selectedPaymentGateway, setSelectedPaymentGateway] = useState<string>("");
   const [isInitiating, setIsInitiating] = useState(false);
 
   const formatPrice = (price: number) => {
@@ -69,7 +98,7 @@ export default function Checkout() {
         subtotal,
         shipping_charge: shipping,
         total,
-        payment_gateway: "phonepe",
+        payment_gateway: selectedPaymentGateway,
       });
 
       if (!response.checkout_url) {
@@ -84,9 +113,9 @@ export default function Checkout() {
     }
   };
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  // if (!isAuthenticated) {
+  //   return <Navigate to="/login" replace />;
+  // }
 
   if (items.length === 0) {
     return (
@@ -190,27 +219,62 @@ export default function Checkout() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <RadioGroup
-                  value={selectedPaymentGateway}
-                  onValueChange={setSelectedPaymentGateway}
-                >
-                  <div className="rounded-lg border border-border bg-secondary/20 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3">
-                        <RadioGroupItem value="phonepe" id="phonepe" className="mt-1" />
-                        <Label htmlFor="phonepe" className="cursor-pointer">
-                          <p className="font-semibold">PhonePe</p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Continue to PhonePe to complete payment.
-                          </p>
-                        </Label>
-                      </div>
-                      {selectedPaymentGateway === "phonepe" && (
-                        <Badge variant="secondary">Selected</Badge>
-                      )}
-                    </div>
+                {isPaymentMethodsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
                   </div>
-                </RadioGroup>
+                ) : paymentMethods && paymentMethods.length > 0 ? (
+                  <RadioGroup
+                    value={selectedPaymentGateway}
+                    onValueChange={setSelectedPaymentGateway}
+                    className="space-y-3"
+                  >
+                    {(Array.isArray(paymentMethods) ? paymentMethods : [])
+                      .map((method: PaymentMethod) => {
+                        const methodInfo = getPaymentMethodInfo(method.payment_method);
+                        return (
+                          <div
+                            key={method.id}
+                            className="rounded-lg border border-border bg-secondary/20 p-4"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-start gap-3">
+                                <RadioGroupItem
+                                  value={method.payment_method}
+                                  id={method.payment_method}
+                                  className="mt-1"
+                                />
+                                <Label
+                                  htmlFor={method.payment_method}
+                                  className="cursor-pointer"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xl">{methodInfo.icon}</span>
+                                    <p className="font-semibold">{methodInfo.label}</p>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    {method.notes || methodInfo.description}
+                                  </p>
+                                </Label>
+                              </div>
+                              {selectedPaymentGateway === method.payment_method && (
+                                <Badge variant="secondary">Selected</Badge>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </RadioGroup>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-border p-4 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      No payment methods available at the moment.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Please try again later or contact support.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -285,11 +349,11 @@ export default function Checkout() {
                   }
                   onClick={handlePlaceOrder}
                 >
-                  {isInitiating ? "Processing..." : "Continue with PhonePe"}
+                  {isInitiating ? "Processing..." : "Place Order"}
                 </Button>
 
                 <p className="text-xs text-muted-foreground text-center mt-3">
-                  By continuing, you confirm this order and proceed with PhonePe.
+                  By continuing, you confirm this order and proceed with payment.
                 </p>
               </CardContent>
             </Card>

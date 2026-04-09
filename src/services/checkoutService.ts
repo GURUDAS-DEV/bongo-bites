@@ -21,6 +21,7 @@ interface InitiateCheckoutResponse {
   shipping_charge?: number;
   total?: number;
   checkout_url?: string;
+  redirect_url?: string;
   payment_gateway: string;
 }
 

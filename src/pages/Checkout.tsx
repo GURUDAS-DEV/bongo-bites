@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { checkoutService } from "@/services/checkoutService";
-import type { PaymentMethod } from "@/services/adminService";
+import type { PublicPaymentMethod } from "@/services/adminService";
 
 const PAYMENT_METHOD_LABELS: Record<string, { label: string; description: string }> = {
   cash_on_delivery: { 
@@ -30,7 +30,6 @@ function getPaymentMethodInfo(method: string) {
   return (
     PAYMENT_METHOD_LABELS[method] || {
       label: method.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
-      icon: "💳",
       description: "Select this payment method",
     }
   );
@@ -41,12 +40,6 @@ export default function Checkout() {
   const { items, getCartTotal } = useCart();
   const { data: addresses, isLoading: isAddressLoading } = useAddresses();
   const { data: paymentMethods, isLoading: isPaymentMethodsLoading } = usePublicPaymentMethods();
-
-  // Debug logging
-  useEffect(() => {
-    console.log('paymentMethods data:', paymentMethods);
-    console.log('isPaymentMethodsLoading:', isPaymentMethodsLoading);
-  }, [paymentMethods, isPaymentMethodsLoading]);
 
   const [selectedAddress, setSelectedAddress] = useState<string>("");
   const [selectedPaymentGateway, setSelectedPaymentGateway] = useState<string>("");
@@ -101,6 +94,16 @@ export default function Checkout() {
         payment_gateway: selectedPaymentGateway,
       });
 
+      // Handle COD orders - redirect to orders page
+      if (selectedPaymentGateway === "cash_on_delivery") {
+        toast.success("Order placed successfully!", {
+          description: "Your COD order has been confirmed. Pay when you receive your order.",
+        });
+        window.location.href = response.redirect_url || "/account/orders";
+        return;
+      }
+
+      // Handle PhonePe orders - redirect to payment gateway
       if (!response.checkout_url) {
         throw new Error("PhonePe redirect URL missing");
       }
@@ -113,9 +116,9 @@ export default function Checkout() {
     }
   };
 
-  // if (!isAuthenticated) {
-  //   return <Navigate to="/login" replace />;
-  // }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   if (items.length === 0) {
     return (
@@ -230,7 +233,7 @@ export default function Checkout() {
                     className="space-y-3"
                   >
                     {(Array.isArray(paymentMethods) ? paymentMethods : [])
-                      .map((method: PaymentMethod) => {
+                      .map((method: PublicPaymentMethod) => {
                         const methodInfo = getPaymentMethodInfo(method.payment_method);
                         return (
                           <div
@@ -249,7 +252,6 @@ export default function Checkout() {
                                   className="cursor-pointer"
                                 >
                                   <div className="flex items-center gap-2">
-                                    <span className="text-xl">{methodInfo.icon}</span>
                                     <p className="font-semibold">{methodInfo.label}</p>
                                   </div>
                                   <p className="text-sm text-muted-foreground mt-1">
@@ -349,11 +351,23 @@ export default function Checkout() {
                   }
                   onClick={handlePlaceOrder}
                 >
-                  {isInitiating ? "Processing..." : "Place Order"}
+                  {isInitiating 
+                    ? "Processing..." 
+                    : selectedPaymentGateway === "cash_on_delivery" 
+                      ? "Place Order (COD)" 
+                      : selectedPaymentGateway === "phonepe" 
+                        ? "Pay with PhonePe" 
+                        : "Place Order"
+                  }
                 </Button>
 
                 <p className="text-xs text-muted-foreground text-center mt-3">
-                  By continuing, you confirm this order and proceed with payment.
+                  {selectedPaymentGateway === "cash_on_delivery" 
+                    ? "Your order will be confirmed. Pay when you receive it."
+                    : selectedPaymentGateway === "phonepe" 
+                      ? "You will be redirected to PhonePe to complete payment."
+                      : "Select a payment method to continue."
+                  }
                 </p>
               </CardContent>
             </Card>

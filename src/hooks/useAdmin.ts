@@ -95,11 +95,7 @@ export function usePaymentMethods() {
 export function usePublicPaymentMethods() {
   return useQuery({
     queryKey: ['payment-methods'],
-    queryFn: async () => {
-      const response = await adminService.getPublicPaymentMethods();
-      console.log('Payment methods response:', response);
-      return response;
-    },
+    queryFn: () => adminService.getPublicPaymentMethods(),
   });
 }
 

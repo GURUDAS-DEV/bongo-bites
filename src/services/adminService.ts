@@ -10,6 +10,13 @@ export interface PaymentMethod {
   updated_at: string;
 }
 
+// Public payment method (returned by /checkout/payment-methods)
+export interface PublicPaymentMethod {
+  id: number;
+  payment_method: string;
+  notes: string | null;
+}
+
 export const adminService = {
   getDashboard: () => apiClient.get<DashboardStats>("/store/admin/dashboard"),
 
@@ -82,5 +89,5 @@ export const adminService = {
 
   // Public payment methods (for checkout)
   getPublicPaymentMethods: () =>
-    apiClient.get<PaymentMethod[]>("/checkout/payment-methods"),
+    apiClient.get<PublicPaymentMethod[]>("/checkout/payment-methods"),
 };

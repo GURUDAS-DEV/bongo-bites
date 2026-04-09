@@ -20,6 +20,23 @@ export default function Cart() {
   const shipping = subtotal > 500 ? 0 : 50; // Free shipping above ₹500
   const total = subtotal + shipping;
 
+  const generateWhatsAppMessage = () => {
+    const itemsList = items
+      .map((i) => `• ${i.quantity}x ${i.name} - ₹${i.price * i.quantity}`)
+      .join("\n");
+    const message = `Hello! I would like to place an order from Bongo Bites.
+
+*Order Details:*
+${itemsList}
+
+*Subtotal:* ₹${subtotal}
+*Shipping:* ${shipping === 0 ? "FREE" : `₹${shipping}`}
+*Total:* ₹${total}
+
+Please confirm availability and let me know the delivery details. Thank you!`;
+    return encodeURIComponent(message);
+  };
+
   if (items.length === 0) {
     return (
       <Layout>
@@ -188,7 +205,7 @@ export default function Cart() {
               </Link>
 
               <a
-                href={`https://wa.me/919330396636?text=Hi, I'd like to place an order for: ${items.map((i) => `${i.quantity}x ${i.name}`).join(", ")}`}
+                href={`https://wa.me/919330396636?text=${generateWhatsAppMessage()}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block mt-3"

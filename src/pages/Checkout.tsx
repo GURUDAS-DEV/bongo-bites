@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { CreditCard, MapPin, ShoppingBag, Truck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Layout from "@/components/layout/Layout";
 import { useCart } from "@/contexts/CartContext";
-import { useAuth } from "@/contexts/AuthContext";
 import { useAddresses } from "@/hooks/useAddresses";
 import { usePublicPaymentMethods } from "@/hooks/useAdmin";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { checkoutService } from "@/services/checkoutService";
+import {
+  checkoutService,
+  type DeliveryOption,
+} from "@/services/checkoutService";
 import type { PublicPaymentMethod } from "@/services/adminService";
 
 const PAYMENT_METHOD_LABELS: Record<string, { label: string; description: string }> = {
@@ -36,13 +38,15 @@ function getPaymentMethodInfo(method: string) {
 }
 
 export default function Checkout() {
-  const { isAuthenticated } = useAuth();
   const { items, getCartTotal } = useCart();
   const { data: addresses, isLoading: isAddressLoading } = useAddresses();
   const { data: paymentMethods, isLoading: isPaymentMethodsLoading } = usePublicPaymentMethods();
 
   const [selectedAddress, setSelectedAddress] = useState<string>("");
   const [selectedPaymentGateway, setSelectedPaymentGateway] = useState<string>("");
+  const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([]);
+  const [selectedDeliveryCode, setSelectedDeliveryCode] = useState<string>("");
+  const [isDeliveryOptionsLoading, setIsDeliveryOptionsLoading] = useState(false);
   const [isInitiating, setIsInitiating] = useState(false);
 
   const formatPrice = (price: number) => {
@@ -53,6 +57,11 @@ export default function Checkout() {
     }).format(price);
   };
 
+  const getDeliveryPrice = (option: DeliveryOption) => {
+    const price = Number(option.charge ?? option.rate ?? 0);
+    return Number.isFinite(price) && price > 0 ? price : 0;
+  };
+
   useEffect(() => {
     if (!addresses?.length) return;
     const defaultAddress = addresses.find((address) => address.is_default);
@@ -60,13 +69,77 @@ export default function Checkout() {
   }, [addresses]);
 
   const subtotal = getCartTotal();
-  const shipping = subtotal > 500 ? 0 : 50;
-  const total = subtotal + shipping;
 
   const selectedAddressDetails = useMemo(
     () => addresses?.find((address) => address.id === selectedAddress),
     [addresses, selectedAddress],
   );
+
+  const selectedDeliveryOption = useMemo(
+    () => deliveryOptions.find((option) => option.code === selectedDeliveryCode),
+    [deliveryOptions, selectedDeliveryCode],
+  );
+
+  const shipping = selectedDeliveryOption ? getDeliveryPrice(selectedDeliveryOption) : 0;
+  const total = subtotal + shipping;
+
+  useEffect(() => {
+    if (!selectedAddress || !selectedPaymentGateway || items.length === 0) {
+      setDeliveryOptions([]);
+      setSelectedDeliveryCode("");
+      return;
+    }
+
+    let isActive = true;
+
+    const fetchDeliveryOptions = async () => {
+      try {
+        setIsDeliveryOptionsLoading(true);
+
+        const response = await checkoutService.getDeliveryOptions({
+          address_id: selectedAddress,
+          items: items.map((item) => ({
+            product_id: item.id,
+            quantity: item.quantity,
+          })),
+          payment_gateway: selectedPaymentGateway,
+        });
+
+        if (!isActive) return;
+
+        const options = Array.isArray(response.options) ? response.options : [];
+        setDeliveryOptions(options);
+
+        setSelectedDeliveryCode((currentCode) => {
+          if (options.some((option) => option.code === currentCode)) {
+            return currentCode;
+          }
+
+          return response.selected_default_code || options[0]?.code || "";
+        });
+      } catch (error) {
+        if (!isActive) return;
+        console.error("[Checkout] Error fetching delivery options:", error);
+        setDeliveryOptions([]);
+        setSelectedDeliveryCode("");
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Could not fetch delivery options",
+        );
+      } finally {
+        if (isActive) {
+          setIsDeliveryOptionsLoading(false);
+        }
+      }
+    };
+
+    fetchDeliveryOptions();
+
+    return () => {
+      isActive = false;
+    };
+  }, [items, selectedAddress, selectedPaymentGateway]);
 
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
@@ -76,6 +149,11 @@ export default function Checkout() {
 
     if (!selectedPaymentGateway) {
       toast.error("Please select a payment method.");
+      return;
+    }
+
+    if (!selectedDeliveryCode) {
+      toast.error("Please select a delivery type.");
       return;
     }
 
@@ -92,6 +170,8 @@ export default function Checkout() {
         shipping_charge: shipping,
         total,
         payment_gateway: selectedPaymentGateway,
+        delivery_option_code: selectedDeliveryCode,
+        delivery_charge: shipping,
       });
 
       // Handle COD orders - redirect to orders page
@@ -116,9 +196,9 @@ export default function Checkout() {
     }
   };
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  // if (!isAuthenticated) {
+  //   return <Navigate to="/login" replace />;
+  // }
 
   if (items.length === 0) {
     return (
@@ -209,6 +289,84 @@ export default function Checkout() {
                     <Link to="/account/addresses">
                       <Button variant="outline" size="sm">Manage Addresses</Button>
                     </Link>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Truck className="h-5 w-5 text-primary" />
+                  Delivery Type
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isDeliveryOptionsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : !selectedAddress ? (
+                  <p className="text-sm text-muted-foreground">
+                    Select a delivery address to view available delivery options.
+                  </p>
+                ) : !selectedPaymentGateway ? (
+                  <p className="text-sm text-muted-foreground">
+                    Select a payment method to load courier rates.
+                  </p>
+                ) : deliveryOptions.length > 0 ? (
+                  <RadioGroup
+                    value={selectedDeliveryCode}
+                    onValueChange={setSelectedDeliveryCode}
+                    className="space-y-3"
+                  >
+                    {deliveryOptions.map((option) => (
+                      <div
+                        key={`${option.code}-${option.courier_company_id ?? option.courier_name}`}
+                        className="rounded-lg border border-border bg-secondary/20 p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3">
+                            <RadioGroupItem
+                              value={option.code}
+                              id={`delivery-${option.code}`}
+                              className="mt-1"
+                            />
+                            <Label
+                              htmlFor={`delivery-${option.code}`}
+                              className="cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold">{option.label}</p>
+                                <Badge variant="secondary">Courier</Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Courier: {option.courier_name}
+                              </p>
+                              {(option.etd || option.estimated_delivery_days || option.estimated_delivery_text) && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  ETA: {option.etd || (option.estimated_delivery_days
+                                    ? `${option.estimated_delivery_days} day(s)`
+                                    : option.estimated_delivery_text)}
+                                </p>
+                              )}
+                            </Label>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold">{formatPrice(getDeliveryPrice(option))}</p>
+                            {selectedDeliveryCode === option.code && (
+                              <Badge variant="secondary" className="mt-1">Selected</Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-border p-4 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Delivery options are unavailable for this address right now.
+                    </p>
                   </div>
                 )}
               </CardContent>
@@ -319,7 +477,7 @@ export default function Checkout() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground inline-flex items-center gap-1">
-                      <Truck className="h-3.5 w-3.5" /> Shipping
+                      <Truck className="h-3.5 w-3.5" /> Delivery
                     </span>
                     {shipping === 0 ? (
                       <span className="text-success font-medium">FREE</span>
@@ -327,6 +485,11 @@ export default function Checkout() {
                       <span>{formatPrice(shipping)}</span>
                     )}
                   </div>
+                  {selectedDeliveryOption && (
+                    <p className="text-xs text-muted-foreground">
+                      {selectedDeliveryOption.label} via {selectedDeliveryOption.courier_name}
+                    </p>
+                  )}
                   <div className="border-t border-border pt-3 mt-3">
                     <div className="flex justify-between text-base font-bold">
                       <span>Total</span>
@@ -346,8 +509,10 @@ export default function Checkout() {
                   className="w-full mt-5"
                   disabled={
                     isInitiating ||
+                    isDeliveryOptionsLoading ||
                     !selectedAddress ||
-                    !selectedPaymentGateway
+                    !selectedPaymentGateway ||
+                    !selectedDeliveryCode
                   }
                   onClick={handlePlaceOrder}
                 >

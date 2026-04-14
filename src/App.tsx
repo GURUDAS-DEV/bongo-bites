@@ -24,6 +24,10 @@ import Contact from "./pages/Contact";
 import Blogs from "./pages/Blogs";
 import BlogDetail from "./pages/BlogDetail";
 import OurStory from "./pages/OurStory";
+import Privacy from "./pages/Privacy";
+import TermsOfCondition from "./pages/TermsOfCondition";
+import ShippingPolicy from "./pages/ShippingPolicy";
+import ReturnAndRefundPolicy from "./pages/ReturnAndRefundPolicy";
 import NotFound from "./pages/NotFound";
 import { AdminLayout } from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -64,6 +68,10 @@ const App = () => (
                 <Route path="/blogs" element={<Blogs />} />
                 <Route path="/blog/:slug" element={<BlogDetail />} />
                 <Route path="/our-story" element={<OurStory />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<TermsOfCondition />} />
+                <Route path="/shipping" element={<ShippingPolicy />} />
+                <Route path="/returns" element={<ReturnAndRefundPolicy />} />
 
                 {/* Admin Routes */}
                 <Route path="/admin" element={<AdminLayout />}>

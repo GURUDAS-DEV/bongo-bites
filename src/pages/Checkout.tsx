@@ -186,6 +186,7 @@ export default function Checkout() {
         payment_gateway: selectedPaymentGateway,
         delivery_option_code: selectedDeliveryCode,
         delivery_charge: shipping,
+        courier_company_id: selectedDeliveryOption?.courier_company_id || null,
       });
 
       // Handle COD orders - redirect to orders page

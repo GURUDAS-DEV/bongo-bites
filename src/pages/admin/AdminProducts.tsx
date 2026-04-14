@@ -50,7 +50,6 @@ export default function AdminProducts() {
     apiClient
       .get<{ id: string; name: string; slug: string }[]>("/api/categories")
       .then((res) => {
-      console.log(res);
       setCategories(res);
     });
   }, []);
